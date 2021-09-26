@@ -1,11 +1,14 @@
 package com.nowcoder.forum;
 
 import com.nowcoder.forum.dao.DiscussPostMapper;
+import com.nowcoder.forum.dao.LoginTicketMapper;
 import com.nowcoder.forum.dao.UserMapper;
 import com.nowcoder.forum.entity.DiscussPost;
+import com.nowcoder.forum.entity.LoginTicket;
 import com.nowcoder.forum.entity.User;
 import com.nowcoder.forum.service.DiscussPostService;
 import com.nowcoder.forum.service.UserService;
+import com.nowcoder.forum.util.CommunityConstant;
 import org.apache.ibatis.annotations.Mapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +19,7 @@ import java.util.*;
 
 @SpringBootTest
 @ContextConfiguration(classes = ForumApplication.class)
-public class MapperTest {
+public class MapperTest implements CommunityConstant {
     @Autowired
     private UserMapper userMapper;
     @Autowired
@@ -25,6 +28,8 @@ public class MapperTest {
     private DiscussPostService discussPostService;
     @Autowired
     private UserService userService;
+    @Autowired
+    private LoginTicketMapper loginTicketMapper;
 
     @Test
     public void testSelectUser() {
@@ -80,7 +85,7 @@ public class MapperTest {
     public void testIndexPage() {
         List<DiscussPost> list = discussPostService.findDiscussPosts(0, 0, 10);
         List<Map<String, Object>> discussPosts = new ArrayList<>();
-        if (list!=null){
+        if (list != null) {
             for (DiscussPost post : list) {
                 Map<String, Object> map = new HashMap<>();
                 map.put("post", post);
@@ -91,5 +96,38 @@ public class MapperTest {
                 discussPosts.add(map);
             }
         }
+    }
+
+    @Test
+    public void testInsertLoginTicket() {
+        LoginTicket loginTicket = new LoginTicket();
+        loginTicket.setTicket("aaa111");
+        loginTicket.setUserId(101);
+        loginTicket.setStatus(0);
+        loginTicket.setExpired(new Date(System.currentTimeMillis() + REMEMBER_EXPIRED_SECONDS  * 1000));
+
+        int i = loginTicketMapper.insertLoginTicket(loginTicket);
+        System.out.println(i);
+
+        loginTicket = new LoginTicket();
+        loginTicket.setTicket("aaa222");
+        loginTicket.setUserId(101);
+        loginTicket.setStatus(0);
+        loginTicket.setExpired(new Date(System.currentTimeMillis() + DEFAULT_EXPIRED_SECONDS * 1000));
+
+        i = loginTicketMapper.insertLoginTicket(loginTicket);
+        System.out.println(i);
+    }
+
+    @Test
+    public void testSelectTicket() {
+        LoginTicket loginTicket = loginTicketMapper.selectLoginTicket("aaa");
+        System.out.println(loginTicket);
+
+        loginTicketMapper.updateStatus("aaa", 1);
+
+        loginTicket = loginTicketMapper.selectLoginTicket("aaa");
+        System.out.println(loginTicket);
+
     }
 }
