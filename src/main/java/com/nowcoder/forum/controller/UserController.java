@@ -3,6 +3,8 @@ package com.nowcoder.forum.controller;
 import com.nowcoder.forum.annotation.LoginRequired;
 import com.nowcoder.forum.entity.Page;
 import com.nowcoder.forum.entity.User;
+import com.nowcoder.forum.service.FollowService;
+import com.nowcoder.forum.service.LikeService;
 import com.nowcoder.forum.service.UserService;
 import com.nowcoder.forum.util.CommunityConstant;
 import com.nowcoder.forum.util.CommunityUtil;
@@ -28,12 +30,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.logging.FileHandler;
 
 @Controller
 @RequestMapping("/user")
-public class UserController {
+public class UserController implements CommunityConstant{
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
@@ -50,7 +53,13 @@ public class UserController {
     private UserService userService;
 
     @Autowired
+    private LikeService likeService;
+
+    @Autowired
     private HostHolder hostHolder;
+
+    @Autowired
+    private FollowService followService;
 
     @LoginRequired
     @RequestMapping(path = "/setting", method = RequestMethod.GET)
@@ -68,7 +77,7 @@ public class UserController {
 
         String filename = headerImage.getOriginalFilename();
         String suffix = filename.substring(filename.lastIndexOf("."));
-        if (StringUtils.isBlank(suffix)||!suffix.equals(".png")||!suffix.equals(".jpg")||!suffix.equals(".jpeg")) {
+        if (StringUtils.isBlank(suffix) || !suffix.equals(".png") || !suffix.equals(".jpg") || !suffix.equals(".jpeg")) {
             model.addAttribute("error", "文件后缀不正确！");
             return "/site/setting";
         }
@@ -133,5 +142,33 @@ public class UserController {
         userService.updatePassword(user.getId(), CommunityUtil.md5(newPassword + user.getSalt()));
 
         return "redirect:/index";
+    }
+
+    // 个人主页
+    @RequestMapping(path = "/profile/{userId}", method = RequestMethod.GET)
+    public String getProfile(@PathVariable("userId") int userId, Model model ) {
+        User user = userService.findUserById(userId);
+        if (user == null) {
+            throw new RuntimeException("该用户不存在！");
+        }
+
+        // 用户
+        model.addAttribute("user", user);
+        // 点赞数量
+        int likeCount = likeService.findUserLikeCount(userId);
+        model.addAttribute("likeCount", likeCount);
+        // 查询粉丝数量和关注数量
+        long followeeCount = followService.findFolloweeCount(userId, ENTITY_TYPE_USER);
+        model.addAttribute("followeeCount", followeeCount);
+
+        long followerCount = followService.findFollowerCount(ENTITY_TYPE_USER, userId);
+        model.addAttribute("followerCount", followerCount);
+        // 查询是否被当前用户关注
+        boolean hasFollowed = false;
+        if (hostHolder.getUser() != null) {
+            hasFollowed = followService.hasFollowed(hostHolder.getUser().getId(), ENTITY_TYPE_USER, userId);
+        }
+        model.addAttribute("hasFollowed", hasFollowed);
+        return "/site/profile";
     }
 }

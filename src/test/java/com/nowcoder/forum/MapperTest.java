@@ -2,9 +2,11 @@ package com.nowcoder.forum;
 
 import com.nowcoder.forum.dao.DiscussPostMapper;
 import com.nowcoder.forum.dao.LoginTicketMapper;
+import com.nowcoder.forum.dao.MessageMapper;
 import com.nowcoder.forum.dao.UserMapper;
 import com.nowcoder.forum.entity.DiscussPost;
 import com.nowcoder.forum.entity.LoginTicket;
+import com.nowcoder.forum.entity.Message;
 import com.nowcoder.forum.entity.User;
 import com.nowcoder.forum.service.DiscussPostService;
 import com.nowcoder.forum.service.UserService;
@@ -30,6 +32,8 @@ public class MapperTest implements CommunityConstant {
     private UserService userService;
     @Autowired
     private LoginTicketMapper loginTicketMapper;
+    @Autowired
+    private MessageMapper messageMapper;
 
     @Test
     public void testSelectUser() {
@@ -129,5 +133,28 @@ public class MapperTest implements CommunityConstant {
         loginTicket = loginTicketMapper.selectLoginTicket("aaa");
         System.out.println(loginTicket);
 
+    }
+
+    @Test
+    public void testSelectLetters() {
+        List<Message> messages = messageMapper.selectConversations(111, 0, 20);
+        for (Message message : messages) {
+            System.out.println(message);
+        }
+        int count = messageMapper.selectConversationCount(111);
+        System.out.println(count);
+
+        List<Message> messages1 = messageMapper.selectLetters("111_112", 0, 10);
+        for (Message message : messages1) {
+            System.out.println(message);
+        }
+        int count1 = messageMapper.selectLetterCount("111_112");
+        System.out.println(count1);
+
+        int count2 = messageMapper.selectLetterUnreadCount(131, null);
+        System.out.println(count2);
+
+        int count3 = messageMapper.selectLetterUnreadCount(131, "111_131");
+        System.out.println(count3);
     }
 }
